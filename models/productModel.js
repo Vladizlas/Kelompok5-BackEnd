@@ -1,7 +1,9 @@
 import db from "../config/database.js";
 
-export const getAllProducts = (callback) => {
+export const getAllProducts = async () => {
     const sql = "SELECT * FROM products ORDER BY id DESC";
 
-    db.query(sql, callback);
+    const [results] = await db.query(sql);
+
+    return results;
 };

@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
+
 import db from "./config/database.js";
 import express from "express";
 import cors from "cors";
@@ -23,11 +24,14 @@ app.get("/", (req, res) => {
 // Product routes
 app.use("/api/products", productRoutes);
 
-// Database connection
+// Database connection & start server
 try {
-  await db.authenticate();
-  console.log("Database connected successfully!");
-} catch (error) {
-  console.error("Unable to connect to database:", error);
-}
+    await db.authenticate();
+    console.log("Database connected successfully!");
 
+    app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+    });
+} catch (error) {
+    console.error("Unable to connect to database:", error);
+}
