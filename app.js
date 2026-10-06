@@ -1,22 +1,14 @@
 import express from "express";
-import cors from "cors";
-
-import authRoutes from "./routes/authRoutes.js";
-import productRoutes from "./routes/productRoutes.js";
+import servicePriceRoutes from "./routes/servicePriceRoutes.js";
+import categoryServiceRoutes from "./routes/categoryServiceRoutes.js";
+import serviceRoute from "./routes/serviceRoute.js";
 
 const app = express();
 
-app.use(cors());
 app.use(express.json());
 
-app.use("/api/auth", authRoutes);
-app.use("/api/products", productRoutes);
-
-app.use((req, res) => {
-  res.status(404).json({
-    status: "fail",
-    message: "Endpoint tidak ditemukan.",
-  });
-});
+app.use("/api/categories", categoryServiceRoutes);
+app.use("/api/services", serviceRoute);
+app.use("/api/service-prices", servicePriceRoutes);
 
 export default app;
