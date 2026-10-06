@@ -1,1 +1,32 @@
+### GET ALL
 GET http://localhost:3000/api/products
+
+
+### GET BY ID
+GET http://localhost:3000/api/products/1
+
+
+### CREATE
+POST http://localhost:3000/api/products
+Content-Type: application/json
+
+{
+  "name": "Cuci Sofa",
+  "price": 20000,
+  "unit": "kg"
+}
+
+
+### UPDATE
+PUT http://localhost:3000/api/products/1
+Content-Type: application/json
+
+{
+  "name": "Cuci Kering Premium",
+  "price": 8000,
+  "unit": "kg"
+}
+
+
+### DELETE
+DELETE http://localhost:3000/api/products/1

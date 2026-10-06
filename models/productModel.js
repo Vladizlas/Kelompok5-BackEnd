@@ -1,9 +1,27 @@
+import { DataTypes } from "sequelize";
 import db from "../config/database.js";
 
-export const getAllProducts = async () => {
-    const sql = "SELECT * FROM products ORDER BY id DESC";
+const Product = db.define(
+  "products",
+  {
+    name: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+    },
 
-    const [results] = await db.query(sql);
+    price: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
 
-    return results;
-};
+    unit: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+    },
+  },
+  {
+    tableName: "products",
+  }
+);
+
+export default Product;

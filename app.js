@@ -1,27 +1,22 @@
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
+import express from "express";
+import cors from "cors";
 
-const authRoutes = require('./routes/authRoutes');
+import authRoutes from "./routes/authRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Routes
-app.use('/api/auth', authRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/products", productRoutes);
 
-// Handling 404 Route Not Found
 app.use((req, res) => {
   res.status(404).json({
-    status: 'fail',
-    message: 'Endpoint tidak ditemukan.'
+    status: "fail",
+    message: "Endpoint tidak ditemukan.",
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server Fanara Laundry berjalan di http://localhost:${PORT}`);
-});
+export default app;
