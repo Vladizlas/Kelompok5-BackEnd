@@ -5,6 +5,7 @@ import app from "./app.js";
 import db from "./config/database.js";
 
 import "./models/productModel.js";
+import "./models/User.js"; // Import model User untuk sync tabel
 
 const PORT = process.env.PORT || 3000;
 
