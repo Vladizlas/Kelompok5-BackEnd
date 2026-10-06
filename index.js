@@ -1,51 +1,23 @@
-import express from "express";
-import cors from "cors";
+import dotenv from "dotenv";
+dotenv.config();
 
+import app from "./app.js";
 import db from "./config/database.js";
-import User from "./models/User.js";
-import authRoute from "./routes/authRoutes.js";
 
-const app = express();
-const PORT = 3000;
+import "./models/productModel.js";
 
-app.use(cors({ origin: "http://localhost:5173" })); // Mengizinkan akses dari Frontend Vite[cite: 6]
-app.use(express.json());
+const PORT = process.env.PORT || 3000;
 
-// Check Server Status
-app.get("/", (req, res) => {
-  res.json({ message: "API Laundry aktif" });
-});
+try {
+  await db.authenticate();
+  console.log("Database connected successfully!");
 
-// Endpoint Routes
-app.use("/api/auth", authRoute);
+  await db.sync();
+  console.log("Database berhasil disinkronkan!");
 
-// Start Server & Sync Database Laragon
-const startServer = async () => {
-  try {
-    await db.authenticate();
-    console.log("Database Laragon terhubung...");
-
-    // Membuat tabel otomatis jika belum ada di database Laragon
-    await db.sync();
-
-    // Otomatis isi data dummy jika tabel masih kosong
-    const count = await User.count();
-    if (count === 0) {
-      await User.create({
-        name: "Admin Fanara Laundry",
-        email: "admin@laundry.com",
-        password: "password123", // Data dummy login[cite: 1]
-        role: "admin",
-      });
-      console.log("Data dummy admin berhasil ditambahkan ke Laragon!");
-    }
-
-    app.listen(PORT, () => {
-      console.log(`Server running at http://localhost:${PORT}`);
-    });
-  } catch (error) {
-    console.error("Gagal menjalankan server:", error);
-  }
-};
-
-startServer();
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+} catch (error) {
+  console.error("Unable to start server:", error);
+}
