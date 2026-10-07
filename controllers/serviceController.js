@@ -50,6 +50,10 @@ export const getServices = async (req, res) => {
           model: CategoryService,
           as: "category",
         },
+        {
+          model: ServicePrice,
+          as: "prices",
+        },
       ],
       order: [["id", "DESC"]],
     });

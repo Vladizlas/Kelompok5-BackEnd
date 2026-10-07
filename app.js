@@ -2,9 +2,14 @@ import express from "express";
 import servicePriceRoutes from "./routes/servicePriceRoutes.js";
 import categoryServiceRoutes from "./routes/categoryServiceRoutes.js";
 import serviceRoute from "./routes/serviceRoute.js";
+import cors from "cors";
 
 const app = express();
-
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+  })
+);
 app.use(express.json());
 
 app.use("/api/categories", categoryServiceRoutes);

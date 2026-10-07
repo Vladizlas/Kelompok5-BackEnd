@@ -1,4 +1,7 @@
-import CategoryService from "../models/CategoryService.js";
+import {
+  CategoryService,
+  Service,
+} from "../models/index.js";
 
 // GET ALL
 export const getCategories = async (req, res) => {
@@ -130,6 +133,7 @@ export const updateCategory = async (req, res) => {
 };
 
 // DELETE
+// DELETE
 export const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
@@ -143,6 +147,21 @@ export const deleteCategory = async (req, res) => {
       });
     }
 
+    // Cek apakah kategori masih memiliki layanan
+    const serviceCount = await Service.count({
+      where: {
+        categoryId: id,
+      },
+    });
+
+    if (serviceCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Kategori tidak dapat dihapus karena masih memiliki layanan. Hapus semua layanan dalam kategori terlebih dahulu.",
+      });
+    }
+
     await category.destroy();
 
     res.status(200).json({
@@ -150,6 +169,8 @@ export const deleteCategory = async (req, res) => {
       message: "Kategori berhasil dihapus",
     });
   } catch (error) {
+    console.error(error);
+
     res.status(500).json({
       success: false,
       message: error.message,

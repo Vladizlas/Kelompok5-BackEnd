@@ -4,6 +4,7 @@ dotenv.config();
 import app from "./app.js";
 import db from "./config/database.js";
 
+import "./models/CategoryService.js";
 import "./models/Service.js";
 
 const PORT = process.env.PORT || 3000;
