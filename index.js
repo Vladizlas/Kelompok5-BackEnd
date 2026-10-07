@@ -6,6 +6,10 @@ import db from "./config/database.js";
 
 import "./models/CategoryService.js";
 import "./models/Service.js";
+import "./models/ServicePrice.js";
+import "./models/Customer.js";
+import "./models/Order.js";
+import "./models/OrderItem.js";
 
 const PORT = process.env.PORT || 3000;
 

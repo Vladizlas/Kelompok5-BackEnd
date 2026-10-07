@@ -6,6 +6,8 @@ import servicePriceRoutes from "./routes/servicePriceRoutes.js";
 import categoryServiceRoutes from "./routes/categoryServiceRoutes.js";
 import serviceRoute from "./routes/serviceRoute.js";
 import userRoutes from "./routes/userRoutes.js";
+import customerRoutes from "./routes/customerRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
 
 const app = express();
 
@@ -52,6 +54,16 @@ app.use(
 app.use(
   "/api/auth",
   authRoutes
+);
+
+app.use(
+  "/api/customers",
+  customerRoutes
+);
+
+app.use(
+  "/api/orders",
+  orderRoutes
 );
 
 

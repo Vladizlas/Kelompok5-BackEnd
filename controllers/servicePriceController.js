@@ -1,4 +1,4 @@
-import { ServicePrice, Service } from "../models/index.js";
+import { ServicePrice, Service, OrderItem } from "../models/index.js";
 
 // ========================================
 // VALIDASI SERVICE PRICE
@@ -262,6 +262,20 @@ export const deleteServicePrice = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Harga layanan tidak ditemukan",
+      });
+    }
+
+    const orderCount = await OrderItem.count({
+      where: {
+        servicePriceId: id,
+      },
+    });
+
+    if (orderCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Harga tidak dapat dihapus karena sudah dipakai pada order.",
       });
     }
 
