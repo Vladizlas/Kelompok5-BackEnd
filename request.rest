@@ -1,32 +1,140 @@
-### GET ALL
-GET http://localhost:3000/api/products
+### ========================================
+### CATEGORY SERVICE
+### ========================================
+
+### GET ALL CATEGORIES
+GET http://localhost:3000/api/categories
 
 
-### GET BY ID
-GET http://localhost:3000/api/products/1
+### GET CATEGORY BY ID
+GET http://localhost:3000/api/categories/1
 
 
-### CREATE
-POST http://localhost:3000/api/products
+### CREATE CATEGORY
+POST http://localhost:3000/api/categories
 Content-Type: application/json
 
 {
-  "name": "Cuci Sofa",
-  "price": 20000,
+  "name": "Cuci"
+}
+
+
+### UPDATE CATEGORY
+PUT http://localhost:3000/api/categories/2
+Content-Type: application/json
+
+{
+  "name": "Cuci Premium"
+}
+
+
+### DELETE CATEGORY
+DELETE http://localhost:3000/api/categories/1
+
+
+
+### ========================================
+### SERVICE
+### ========================================
+
+### GET ALL SERVICES
+GET http://localhost:3000/api/services
+
+
+### GET SERVICE BY ID
+GET http://localhost:3000/api/services/1
+
+
+### CREATE SERVICE
+POST http://localhost:3000/api/services
+Content-Type: application/json
+
+{
+  "categoryId": 2,
+  "name": "Cuci",
+  "description": "Layanan cuci pakaian"
+}
+
+
+### UPDATE SERVICE
+PUT http://localhost:3000/api/services/1
+Content-Type: application/json
+
+{
+  "categoryId": 1,
+  "name": "Cuci Premium",
+  "description": "Layanan cuci pakaian premium"
+}
+
+
+### DELETE SERVICE
+DELETE http://localhost:3000/api/services/1
+
+
+
+### ========================================
+### SERVICE PRICE
+### ========================================
+
+### GET ALL SERVICE PRICES
+GET http://localhost:3000/api/service-prices
+
+
+### GET SERVICE PRICE BY ID
+GET http://localhost:3000/api/service-prices/2
+
+
+### GET PRICES BY SERVICE
+GET http://localhost:3000/api/service-prices/service/1
+
+
+### CREATE SERVICE PRICE - KG
+POST http://localhost:3000/api/service-prices
+Content-Type: application/json
+
+{
+  "serviceId": 1,
+  "itemType": "Pakaian biasa",
+  "price": 7000,
   "unit": "kg"
 }
 
 
-### UPDATE
-PUT http://localhost:3000/api/products/1
+### CREATE SERVICE PRICE - PCS
+POST http://localhost:3000/api/service-prices
 Content-Type: application/json
 
 {
-  "name": "Cuci Kering Premium",
-  "price": 8000,
+  "serviceId": 1,
+  "itemType": "Handuk",
+  "price": 10000,
+  "unit": "pcs"
+}
+
+
+### CREATE SERVICE PRICE - PCS
+POST http://localhost:3000/api/service-prices
+Content-Type: application/json
+
+{
+  "serviceId": 1,
+  "itemType": "Selimut",
+  "price": 15000,
+  "unit": "pcs"
+}
+
+
+### UPDATE SERVICE PRICE
+PUT http://localhost:3000/api/service-prices/1
+Content-Type: application/json
+
+{
+  "serviceId": 1,
+  "itemType": "Pakaian biasa",
+  "price": 7500,
   "unit": "kg"
 }
 
 
-### DELETE
-DELETE http://localhost:3000/api/products/1
+### DELETE SERVICE PRICE
+DELETE http://localhost:3000/api/service-prices/1
