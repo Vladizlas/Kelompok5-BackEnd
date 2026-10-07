@@ -138,3 +138,85 @@ Content-Type: application/json
 
 ### DELETE SERVICE PRICE
 DELETE http://localhost:3000/api/service-prices/1
+
+### Login
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@laundry.com",
+  "password": "password"
+}
+
+### ========================================
+### CUSTOMER
+### ========================================
+
+### GET ALL CUSTOMERS
+GET http://localhost:3000/api/customers
+
+
+### CREATE CUSTOMER
+POST http://localhost:3000/api/customers
+Content-Type: application/json
+
+{
+  "name": "Budi Santoso",
+  "phone": "081234567890",
+  "address": "Jl. Melati No. 5"
+}
+
+
+### UPDATE CUSTOMER
+PUT http://localhost:3000/api/customers/1
+Content-Type: application/json
+
+{
+  "name": "Budi Santoso",
+  "phone": "081234567891",
+  "address": "Jl. Melati No. 7"
+}
+
+
+### DELETE CUSTOMER
+DELETE http://localhost:3000/api/customers/1
+
+
+### ========================================
+### ORDER
+### harga total dihitung server dari service_prices x quantity
+### ========================================
+
+### GET ALL ORDERS
+GET http://localhost:3000/api/orders
+
+
+### CREATE ORDER (1 invoice, banyak item; servicePriceId = id dari /api/service-prices)
+POST http://localhost:3000/api/orders
+Content-Type: application/json
+
+{
+  "customerId": 1,
+  "paymentMethod": "cash",
+  "items": [
+    { "servicePriceId": 1, "quantity": 2.5 },
+    { "servicePriceId": 2, "quantity": 3 }
+  ]
+}
+
+
+### UPDATE ORDER (item lama diganti seluruhnya)
+PUT http://localhost:3000/api/orders/1
+Content-Type: application/json
+
+{
+  "customerId": 1,
+  "paymentMethod": "transfer",
+  "items": [
+    { "servicePriceId": 1, "quantity": 3 }
+  ]
+}
+
+
+### DELETE ORDER
+DELETE http://localhost:3000/api/orders/1

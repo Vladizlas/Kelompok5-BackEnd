@@ -4,8 +4,12 @@ dotenv.config();
 import app from "./app.js";
 import db from "./config/database.js";
 
-// import "./models/productModel.js";
-import "./models/User.js"; // Import model User untuk sync tabel
+import "./models/CategoryService.js";
+import "./models/Service.js";
+import "./models/ServicePrice.js";
+import "./models/Customer.js";
+import "./models/Order.js";
+import "./models/OrderItem.js";
 
 const PORT = process.env.PORT || 3000;
 

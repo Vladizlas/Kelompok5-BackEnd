@@ -2,6 +2,7 @@ import {
   Service,
   CategoryService,
   ServicePrice,
+  OrderItem,
 } from "../models/index.js";
 
 // ========================================
@@ -247,6 +248,21 @@ export const deleteService = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Layanan tidak ditemukan",
+      });
+    }
+
+    // Cek apakah layanan sudah dipakai order
+    const orderCount = await OrderItem.count({
+      where: {
+        serviceId: id,
+      },
+    });
+
+    if (orderCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Layanan tidak dapat dihapus karena sudah dipakai pada order.",
       });
     }
 

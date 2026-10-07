@@ -1,5 +1,8 @@
+import db from "../config/database.js";
+
 import {
   Order,
+  OrderItem,
   Customer,
   CategoryService,
   Service,
@@ -8,27 +11,36 @@ import {
 
 const PAYMENT_METHODS = ["cash", "transfer"];
 
+const MAX_ITEMS = 50;
+
 const orderInclude = [
   { model: Customer, as: "customer" },
-  { model: CategoryService, as: "category" },
-  { model: Service, as: "service" },
-  { model: ServicePrice, as: "servicePrice" },
+  {
+    model: OrderItem,
+    as: "items",
+    include: [
+      { model: CategoryService, as: "category" },
+      { model: Service, as: "service" },
+      { model: ServicePrice, as: "servicePrice" },
+    ],
+  },
+];
+
+const orderSort = [
+  ["id", "DESC"],
+  [{ model: OrderItem, as: "items" }, "id", "ASC"],
 ];
 
 // ========================================
 // VALIDASI + HITUNG ORDER
-// Kategori & layanan DIAMBIL dari servicePrice di server,
-// harga total DIHITUNG di server (bukan percaya kiriman client).
+// Kategori & layanan tiap item DIAMBIL dari servicePrice di server,
+// subtotal & total DIHITUNG di server (bukan percaya kiriman client).
 // ========================================
 const buildOrderData = async (body) => {
-  const { customerId, servicePriceId, quantity, paymentMethod } = body;
+  const { customerId, paymentMethod, items } = body;
 
   if (!customerId || !Number.isInteger(Number(customerId))) {
     return { status: 400, message: "Pelanggan wajib dipilih" };
-  }
-
-  if (!servicePriceId || !Number.isInteger(Number(servicePriceId))) {
-    return { status: 400, message: "Layanan / jenis item wajib dipilih" };
   }
 
   if (!PAYMENT_METHODS.includes(paymentMethod)) {
@@ -38,10 +50,41 @@ const buildOrderData = async (body) => {
     };
   }
 
-  const qty = Number(quantity);
+  if (!Array.isArray(items) || items.length === 0) {
+    return { status: 400, message: "Minimal 1 item layanan" };
+  }
 
-  if (quantity === "" || quantity == null || !Number.isFinite(qty) || qty <= 0) {
-    return { status: 400, message: "Berat / jumlah harus lebih dari 0" };
+  if (items.length > MAX_ITEMS) {
+    return { status: 400, message: `Maksimal ${MAX_ITEMS} item per order` };
+  }
+
+  // validasi bentuk tiap item
+  for (let i = 0; i < items.length; i++) {
+    const { servicePriceId, quantity } = items[i] || {};
+    const no = i + 1;
+
+    if (!servicePriceId || !Number.isInteger(Number(servicePriceId))) {
+      return {
+        status: 400,
+        message: `Item ${no}: layanan / jenis item wajib dipilih`,
+      };
+    }
+
+    const qty = Number(quantity);
+
+    if (quantity === "" || quantity == null || !Number.isFinite(qty) || qty <= 0) {
+      return {
+        status: 400,
+        message: `Item ${no}: berat / jumlah harus lebih dari 0`,
+      };
+    }
+
+    if (Math.round(qty * 100) / 100 !== qty) {
+      return {
+        status: 400,
+        message: `Item ${no}: maksimal 2 angka di belakang koma`,
+      };
+    }
   }
 
   const customer = await Customer.findByPk(customerId);
@@ -50,35 +93,61 @@ const buildOrderData = async (body) => {
     return { status: 404, message: "Pelanggan tidak ditemukan" };
   }
 
-  const servicePrice = await ServicePrice.findByPk(servicePriceId, {
+  // ambil semua harga yang dipakai dalam 1 query
+  const priceIds = [...new Set(items.map((i) => Number(i.servicePriceId)))];
+
+  const prices = await ServicePrice.findAll({
+    where: { id: priceIds },
     include: [{ model: Service, as: "service" }],
   });
 
-  if (!servicePrice) {
-    return { status: 404, message: "Harga layanan tidak ditemukan" };
-  }
+  const priceMap = new Map(prices.map((p) => [p.id, p]));
 
-  // pcs harus bilangan bulat, kg boleh desimal (maks 2 digit)
-  if (servicePrice.unit === "pcs" && !Number.isInteger(qty)) {
-    return { status: 400, message: "Jumlah pcs harus bilangan bulat" };
-  }
+  const itemRows = [];
+  let totalPrice = 0;
 
-  if (Math.round(qty * 100) / 100 !== qty) {
-    return { status: 400, message: "Maksimal 2 angka di belakang koma" };
-  }
+  for (let i = 0; i < items.length; i++) {
+    const no = i + 1;
+    const servicePrice = priceMap.get(Number(items[i].servicePriceId));
+    const qty = Number(items[i].quantity);
 
-  return {
-    data: {
-      customerId: Number(customerId),
+    if (!servicePrice) {
+      return {
+        status: 404,
+        message: `Item ${no}: harga layanan tidak ditemukan`,
+      };
+    }
+
+    // pcs harus bilangan bulat, kg boleh desimal
+    if (servicePrice.unit === "pcs" && !Number.isInteger(qty)) {
+      return {
+        status: 400,
+        message: `Item ${no}: jumlah pcs harus bilangan bulat`,
+      };
+    }
+
+    const subtotal = Math.round(servicePrice.price * qty);
+
+    totalPrice += subtotal;
+
+    itemRows.push({
       categoryId: servicePrice.service.categoryId,
       serviceId: servicePrice.serviceId,
       servicePriceId: servicePrice.id,
       quantity: qty,
       unit: servicePrice.unit,
       pricePerUnit: servicePrice.price,
-      totalPrice: Math.round(servicePrice.price * qty),
+      subtotal,
+    });
+  }
+
+  return {
+    header: {
+      customerId: Number(customerId),
       paymentMethod,
+      totalPrice,
     },
+    items: itemRows,
   };
 };
 
@@ -89,7 +158,7 @@ export const getOrders = async (req, res) => {
   try {
     const orders = await Order.findAll({
       include: orderInclude,
-      order: [["id", "DESC"]],
+      order: orderSort,
     });
 
     res.status(200).json({
@@ -116,6 +185,7 @@ export const getOrder = async (req, res) => {
 
     const order = await Order.findByPk(id, {
       include: orderInclude,
+      order: [[{ model: OrderItem, as: "items" }, "id", "ASC"]],
     });
 
     if (!order) {
@@ -147,17 +217,28 @@ export const createOrder = async (req, res) => {
   try {
     const result = await buildOrderData(req.body);
 
-    if (!result.data) {
+    if (!result.header) {
       return res.status(result.status).json({
         success: false,
         message: result.message,
       });
     }
 
-    const created = await Order.create(result.data);
+    // header + item disimpan bersamaan: gagal satu, batal semua
+    const orderId = await db.transaction(async (transaction) => {
+      const created = await Order.create(result.header, { transaction });
 
-    const order = await Order.findByPk(created.id, {
+      await OrderItem.bulkCreate(
+        result.items.map((item) => ({ ...item, orderId: created.id })),
+        { transaction }
+      );
+
+      return created.id;
+    });
+
+    const order = await Order.findByPk(orderId, {
       include: orderInclude,
+      order: [[{ model: OrderItem, as: "items" }, "id", "ASC"]],
     });
 
     res.status(201).json({
@@ -177,6 +258,7 @@ export const createOrder = async (req, res) => {
 
 // ========================================
 // UPDATE
+// item lama diganti seluruhnya dengan item yang dikirim
 // ========================================
 export const updateOrder = async (req, res) => {
   try {
@@ -193,17 +275,30 @@ export const updateOrder = async (req, res) => {
 
     const result = await buildOrderData(req.body);
 
-    if (!result.data) {
+    if (!result.header) {
       return res.status(result.status).json({
         success: false,
         message: result.message,
       });
     }
 
-    await order.update(result.data);
+    await db.transaction(async (transaction) => {
+      await order.update(result.header, { transaction });
+
+      await OrderItem.destroy({
+        where: { orderId: order.id },
+        transaction,
+      });
+
+      await OrderItem.bulkCreate(
+        result.items.map((item) => ({ ...item, orderId: order.id })),
+        { transaction }
+      );
+    });
 
     const updated = await Order.findByPk(id, {
       include: orderInclude,
+      order: [[{ model: OrderItem, as: "items" }, "id", "ASC"]],
     });
 
     res.status(200).json({
@@ -237,7 +332,14 @@ export const deleteOrder = async (req, res) => {
       });
     }
 
-    await order.destroy();
+    await db.transaction(async (transaction) => {
+      await OrderItem.destroy({
+        where: { orderId: order.id },
+        transaction,
+      });
+
+      await order.destroy({ transaction });
+    });
 
     res.status(200).json({
       success: true,

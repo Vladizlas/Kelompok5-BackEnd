@@ -3,6 +3,7 @@ import Service from "./Service.js";
 import ServicePrice from "./ServicePrice.js";
 import Customer from "./Customer.js";
 import Order from "./Order.js";
+import OrderItem from "./OrderItem.js";
 
 // ========================================
 // CATEGORY SERVICE -> SERVICE
@@ -33,10 +34,9 @@ ServicePrice.belongsTo(Service, {
 });
 
 // ========================================
-// ORDER
-// onDelete RESTRICT: data master (customer, kategori,
-// layanan, harga) yang sudah dipakai order tidak boleh
-// ikut menghapus order secara diam-diam.
+// ORDER (header invoice)
+// onDelete RESTRICT: customer yang sudah punya order
+// tidak boleh terhapus diam-diam.
 // ========================================
 
 Customer.hasMany(Order, {
@@ -51,37 +51,60 @@ Order.belongsTo(Customer, {
   onDelete: "RESTRICT",
 });
 
-CategoryService.hasMany(Order, {
+// ========================================
+// ORDER -> ORDER ITEMS
+// hapus order = hapus semua itemnya
+// ========================================
+
+Order.hasMany(OrderItem, {
+  foreignKey: "orderId",
+  as: "items",
+  onDelete: "CASCADE",
+});
+
+OrderItem.belongsTo(Order, {
+  foreignKey: "orderId",
+  as: "order",
+  onDelete: "CASCADE",
+});
+
+// ========================================
+// ORDER ITEM -> data master layanan
+// RESTRICT: kategori / layanan / harga yang sudah dipakai
+// invoice tidak boleh ikut menghapus rincian invoice.
+// ========================================
+
+CategoryService.hasMany(OrderItem, {
   foreignKey: "categoryId",
-  as: "orders",
+  as: "orderItems",
   onDelete: "RESTRICT",
 });
 
-Order.belongsTo(CategoryService, {
+OrderItem.belongsTo(CategoryService, {
   foreignKey: "categoryId",
   as: "category",
   onDelete: "RESTRICT",
 });
 
-Service.hasMany(Order, {
+Service.hasMany(OrderItem, {
   foreignKey: "serviceId",
-  as: "orders",
+  as: "orderItems",
   onDelete: "RESTRICT",
 });
 
-Order.belongsTo(Service, {
+OrderItem.belongsTo(Service, {
   foreignKey: "serviceId",
   as: "service",
   onDelete: "RESTRICT",
 });
 
-ServicePrice.hasMany(Order, {
+ServicePrice.hasMany(OrderItem, {
   foreignKey: "servicePriceId",
-  as: "orders",
+  as: "orderItems",
   onDelete: "RESTRICT",
 });
 
-Order.belongsTo(ServicePrice, {
+OrderItem.belongsTo(ServicePrice, {
   foreignKey: "servicePriceId",
   as: "servicePrice",
   onDelete: "RESTRICT",
@@ -93,4 +116,5 @@ export {
   ServicePrice,
   Customer,
   Order,
+  OrderItem,
 };

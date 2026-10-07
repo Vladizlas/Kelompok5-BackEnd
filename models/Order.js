@@ -1,6 +1,8 @@
 import { DataTypes } from "sequelize";
 import db from "../config/database.js";
 
+// Order = header invoice (1 pelanggan, 1 metode pembayaran, 1 total).
+// Rincian layanan ada di tabel order_items (lihat OrderItem.js).
 const Order = db.define(
   "orders",
   {
@@ -16,53 +18,17 @@ const Order = db.define(
       field: "customer_id",
     },
 
-    categoryId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      field: "category_id",
-    },
-
-    serviceId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      field: "service_id",
-    },
-
-    servicePriceId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      field: "service_price_id",
-    },
-
-    // berat (kg) atau jumlah (pcs)
-    quantity: {
-      type: DataTypes.DECIMAL(10, 2),
-      allowNull: false,
-    },
-
-    // disalin dari service_prices saat order dibuat,
-    // supaya order lama tidak berubah kalau harga layanan diedit
-    unit: {
-      type: DataTypes.ENUM("kg", "pcs"),
-      allowNull: false,
-    },
-
-    pricePerUnit: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      field: "price_per_unit",
-    },
-
-    totalPrice: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      field: "total_price",
-    },
-
     paymentMethod: {
       type: DataTypes.ENUM("cash", "transfer"),
       allowNull: false,
       field: "payment_method",
+    },
+
+    // jumlah seluruh subtotal item
+    totalPrice: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: "total_price",
     },
   },
   {
