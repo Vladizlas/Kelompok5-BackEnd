@@ -1,50 +1,76 @@
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+
+const JWT_SECRET = "belajar-react-jwt-rahasia";
 
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 1. Validasi input
     if (!email || !password) {
       return res.status(400).json({
-        status: "fail",
-        message: "Email dan password wajib diisi.",
+        message: "Email dan password wajib diisi",
       });
     }
 
-    // 2. Cari user berdasarkan email di database
-    const user = await User.findOne({
-      where: {
-        email: email,
-      },
-    });
+    const user = await User.findOne({ where: { email } });
 
-    // 3. Jika user tidak ditemukan atau password tidak cocok
-    if (!user || user.password !== password) {
+    if (!user) {
       return res.status(401).json({
-        status: "fail",
-        message: "Email atau password salah.",
+        message: "Email atau password salah",
       });
     }
 
-    // 4. Respons sukses jika login berhasil
+    const passwordMatch = await bcrypt.compare(
+      password,
+      user.password
+    );
+
+    if (!passwordMatch) {
+      return res.status(401).json({
+        message: "Email atau password salah",
+      });
+    }
+
+    const token = jwt.sign(
+      { id: user.id },
+      JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
     return res.status(200).json({
-      status: "success",
-      message: "Login berhasil, selamat datang di Fanara Laundry!",
-      data: {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
+      message: "Login berhasil",
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
       },
     });
   } catch (error) {
-    console.error("Login Error:", error);
     return res.status(500).json({
-      status: "error",
-      message: "Terjadi kesalahan pada server.",
+      message: error.message,
+    });
+  }
+};
+
+export const getMe = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      attributes: ["id", "name", "email"],
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User tidak ditemukan",
+      });
+    }
+
+    return res.status(200).json({ data: user });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Terjadi kesalahan pada server",
     });
   }
 };
