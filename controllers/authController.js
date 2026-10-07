@@ -1,7 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
-import bcrypt from "bcrypt";
 
 const JWT_SECRET = process.env.JWT_SECRET || "belajar-react-jwt-rahasia";
 
@@ -12,7 +11,6 @@ export const login = async (req, res) => {
     // ================================
     // VALIDASI INPUT
     // ================================
-
     if (!email || !password) {
       return res.status(400).json({
         status: "fail",
@@ -23,7 +21,6 @@ export const login = async (req, res) => {
     // ================================
     // CARI USER BERDASARKAN EMAIL
     // ================================
-
     const user = await User.findOne({
       where: {
         email: email.trim(),
@@ -33,7 +30,6 @@ export const login = async (req, res) => {
     // ================================
     // USER TIDAK DITEMUKAN
     // ================================
-
     if (!user) {
       return res.status(401).json({
         status: "fail",
@@ -44,7 +40,6 @@ export const login = async (req, res) => {
     // ================================
     // CEK PASSWORD DENGAN BCRYPT
     // ================================
-
     const passwordMatch = await bcrypt.compare(
       password,
       user.password
@@ -58,20 +53,31 @@ export const login = async (req, res) => {
     }
 
     // ================================
+    // GENERATE JWT TOKEN
+    // ================================
+    const token = jwt.sign(
+      { 
+        id: user.id, 
+        email: user.email, 
+        role: user.role || "user" 
+      },
+      JWT_SECRET,
+      { expiresIn: "1d" } // Token berlaku 1 hari
+    );
+
+    // ================================
     // LOGIN BERHASIL
     // ================================
-
     return res.status(200).json({
       status: "success",
-      message:
-        "Login berhasil, selamat datang di Fanara Laundry!",
+      message: "Login berhasil, selamat datang di Fanara Laundry!",
       data: {
         token,
         user: {
           id: user.id,
-          name: user.name,
+          nama: user.nama || user.name, // Disesuaikan dengan field database
           email: user.email,
-          role: user.role, // Sertakan role jika ada
+          role: user.role,
         },
       },
     });
@@ -88,7 +94,7 @@ export const login = async (req, res) => {
 export const getMe = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: ["id", "name", "email", "role"],
+      attributes: ["id", "nama", "email", "role"],
     });
 
     if (!user) {
