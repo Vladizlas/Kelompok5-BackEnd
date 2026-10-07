@@ -1,13 +1,27 @@
 import express from "express";
-import { getUsers, createUser, updateUser, deleteUser } from "../controllers/userController.js";
-import { authMiddleware } from "../middleware/auth.middleware.js";
+import {
+  getUsers,
+  getUserById,
+  createUser,
+  updateUser,
+  deleteUser,
+} from "../controllers/userController.js";
 
 const router = express.Router();
 
-// Terapkan authMiddleware ke semua rute user
-router.get("/", authMiddleware, getUsers);
-router.post("/", authMiddleware, createUser);
-router.put("/:id", authMiddleware, updateUser);
-router.delete("/:id", authMiddleware, deleteUser);
+// GET /api/users
+router.get("/", getUsers);
+
+// GET /api/users/:id
+router.get("/:id", getUserById);
+
+// POST /api/users
+router.post("/", createUser);
+
+// PUT /api/users/:id
+router.put("/:id", updateUser);
+
+// DELETE /api/users/:id
+router.delete("/:id", deleteUser);
 
 export default router;

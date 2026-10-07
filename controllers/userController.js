@@ -1,141 +1,249 @@
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
 
-// 1. Ambil Semua Data User (GET /api/users)
+// =====================================================
+// GET ALL USERS
+// GET /api/users
+// =====================================================
+
 export const getUsers = async (req, res) => {
   try {
     const users = await User.findAll({
-      attributes: ["id", "name", "email", "role", "createdAt", "updatedAt"], // Menyembunyikan password
-      order: [["id", "DESC"]], // Urutkan dari data terbaru
+      attributes: [
+        "id",
+        "name",
+        "email",
+        "role",
+        "createdAt",
+        "updatedAt",
+      ],
+      order: [["id", "ASC"]],
     });
-    return res.status(200).json(users);
+
+    return res.status(200).json({
+      status: "success",
+      data: users,
+    });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error("Get Users Error:", error);
+
+    return res.status(500).json({
+      status: "error",
+      message: "Gagal mengambil data user.",
+    });
   }
 };
 
-// 2. Ambil Single User berdasarkan ID (GET /api/users/:id)
+// =====================================================
+// GET USER BY ID
+// GET /api/users/:id
+// =====================================================
+
 export const getUserById = async (req, res) => {
-  const { id } = req.params;
   try {
+    const { id } = req.params;
+
     const user = await User.findByPk(id, {
-      attributes: ["id", "name", "email", "role", "createdAt", "updatedAt"],
+      attributes: [
+        "id",
+        "name",
+        "email",
+        "role",
+        "createdAt",
+        "updatedAt",
+      ],
     });
 
     if (!user) {
-      return res.status(404).json({ message: "User tidak ditemukan" });
+      return res.status(404).json({
+        status: "fail",
+        message: "User tidak ditemukan.",
+      });
     }
 
-    return res.status(200).json(user);
+    return res.status(200).json({
+      status: "success",
+      data: user,
+    });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error("Get User Error:", error);
+
+    return res.status(500).json({
+      status: "error",
+      message: "Gagal mengambil data user.",
+    });
   }
 };
 
-// 3. Tambah User Baru (POST /api/users)
+// =====================================================
+// CREATE USER
+// POST /api/users
+// =====================================================
+
 export const createUser = async (req, res) => {
-  const { name, email, password, role } = req.body;
-
-  // Validasi bidang wajib
-  if (!name || !email || !password) {
-    return res.status(400).json({ message: "Nama, email, dan password wajib diisi" });
-  }
-
   try {
-    // Cek apakah email sudah terdaftar
-    const existingUser = await User.findOne({ where: { email } });
+    const {
+      name,
+      email,
+      password,
+      role,
+    } = req.body;
+
+    // Validasi
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        status: "fail",
+        message:
+          "Nama, email, dan password wajib diisi.",
+      });
+    }
+
+    // Cek email
+    const existingUser = await User.findOne({
+      where: {
+        email: email.trim(),
+      },
+    });
+
     if (existingUser) {
-      return res.status(400).json({ message: "Email sudah digunakan oleh user lain" });
+      return res.status(409).json({
+        status: "fail",
+        message: "Email sudah digunakan.",
+      });
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(
+      password,
+      10
+    );
 
-    const newUser = await User.create({
-      name,
-      email,
+    const user = await User.create({
+      name: name.trim(),
+      email: email.trim(),
       password: hashedPassword,
-      role, // Default role ke 'kasir' jika tidak diisi
+      role: role || "staff",
     });
-
-    // Sanitasi data response (hapus password dari payload balikan)
-    const userResponse = {
-      id: newUser.id,
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role,
-      createdAt: newUser.createdAt,
-    };
 
     return res.status(201).json({
-      message: "User berhasil dibuat",
-      data: userResponse,
+      status: "success",
+      message: "User berhasil ditambahkan.",
+      data: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error("Create User Error:", error);
+
+    return res.status(500).json({
+      status: "error",
+      message: "Gagal menambahkan user.",
+    });
   }
 };
 
-// 4. Update User (PUT /api/users/:id)
+// =====================================================
+// UPDATE USER
+// PUT /api/users/:id
+// =====================================================
+
 export const updateUser = async (req, res) => {
-  const { id } = req.params;
-  const { name, email, role, password } = req.body;
-
   try {
+    const { id } = req.params;
+
+    const {
+      name,
+      email,
+      password,
+      role,
+    } = req.body;
+
     const user = await User.findByPk(id);
+
     if (!user) {
-      return res.status(404).json({ message: "User tidak ditemukan" });
+      return res.status(404).json({
+        status: "fail",
+        message: "User tidak ditemukan.",
+      });
     }
 
-    // Cek jika email diubah dan email baru sudah dipakai user lain
-    if (email && email !== user.email) {
-      const existingUser = await User.findOne({ where: { email } });
-      if (existingUser) {
-        return res.status(400).json({ message: "Email sudah digunakan oleh user lain" });
-      }
+    // Update data dasar
+    if (name !== undefined) {
+      user.name = name.trim();
     }
 
-    user.name = name || user.name;
-    user.email = email || user.email;
-    user.role = role || user.role;
+    if (email !== undefined) {
+      user.email = email.trim();
+    }
 
-    // Hanya update password jika dikirim dari frontend/form
-    if (password && password.trim() !== "") {
-      user.password = await bcrypt.hash(password, 10);
+    if (role !== undefined) {
+      user.role = role;
+    }
+
+    // Jika password diubah,
+    // hash password baru
+    if (password && password.trim()) {
+      user.password = await bcrypt.hash(
+        password,
+        10
+      );
     }
 
     await user.save();
 
-    // Sanitasi response
-    const updatedResponse = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      updatedAt: user.updatedAt,
-    };
-
     return res.status(200).json({
-      message: "User berhasil diperbarui",
-      data: updatedResponse,
+      status: "success",
+      message: "User berhasil diupdate.",
+      data: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error("Update User Error:", error);
+
+    return res.status(500).json({
+      status: "error",
+      message: "Gagal mengupdate user.",
+    });
   }
 };
 
-// 5. Hapus User (DELETE /api/users/:id)
+// =====================================================
+// DELETE USER
+// DELETE /api/users/:id
+// =====================================================
+
 export const deleteUser = async (req, res) => {
-  const { id } = req.params;
   try {
+    const { id } = req.params;
+
     const user = await User.findByPk(id);
+
     if (!user) {
-      return res.status(404).json({ message: "User tidak ditemukan" });
+      return res.status(404).json({
+        status: "fail",
+        message: "User tidak ditemukan.",
+      });
     }
 
     await user.destroy();
-    return res.status(200).json({ message: "User berhasil dihapus" });
+
+    return res.status(200).json({
+      status: "success",
+      message: "User berhasil dihapus.",
+    });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error("Delete User Error:", error);
+
+    return res.status(500).json({
+      status: "error",
+      message: "Gagal menghapus user.",
+    });
   }
 };

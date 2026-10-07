@@ -1,12 +1,17 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import bcrypt from "bcrypt";
 
 const JWT_SECRET = process.env.JWT_SECRET || "belajar-react-jwt-rahasia";
 
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    // ================================
+    // VALIDASI INPUT
+    // ================================
 
     if (!email || !password) {
       return res.status(400).json({
@@ -15,7 +20,19 @@ export const login = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ where: { email } });
+    // ================================
+    // CARI USER BERDASARKAN EMAIL
+    // ================================
+
+    const user = await User.findOne({
+      where: {
+        email: email.trim(),
+      },
+    });
+
+    // ================================
+    // USER TIDAK DITEMUKAN
+    // ================================
 
     if (!user) {
       return res.status(401).json({
@@ -23,6 +40,10 @@ export const login = async (req, res) => {
         message: "Email atau password salah",
       });
     }
+
+    // ================================
+    // CEK PASSWORD DENGAN BCRYPT
+    // ================================
 
     const passwordMatch = await bcrypt.compare(
       password,
@@ -32,19 +53,18 @@ export const login = async (req, res) => {
     if (!passwordMatch) {
       return res.status(401).json({
         status: "fail",
-        message: "Email atau password salah",
+        message: "Email atau password salah.",
       });
     }
 
-    const token = jwt.sign(
-      { id: user.id },
-      JWT_SECRET,
-      { expiresIn: "1h" }
-    );
+    // ================================
+    // LOGIN BERHASIL
+    // ================================
 
     return res.status(200).json({
       status: "success",
-      message: "Login berhasil",
+      message:
+        "Login berhasil, selamat datang di Fanara Laundry!",
       data: {
         token,
         user: {
@@ -56,6 +76,8 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("Login Error:", error);
+
     return res.status(500).json({
       status: "error",
       message: error.message,
