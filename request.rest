@@ -138,3 +138,12 @@ Content-Type: application/json
 
 ### DELETE SERVICE PRICE
 DELETE http://localhost:3000/api/service-prices/1
+
+### Login
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@laundry.com",
+  "password": "password"
+}
