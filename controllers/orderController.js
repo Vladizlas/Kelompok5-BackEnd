@@ -10,6 +10,7 @@ import {
 } from "../models/index.js";
 
 const PAYMENT_METHODS = ["cash", "transfer"];
+const STATUSES = ["diterima", "diproses", "selesai", "diambil"];
 
 const MAX_ITEMS = 50;
 
@@ -33,8 +34,6 @@ const orderSort = [
 
 // ========================================
 // VALIDASI + HITUNG ORDER
-// Kategori & layanan tiap item DIAMBIL dari servicePrice di server,
-// subtotal & total DIHITUNG di server (bukan percaya kiriman client).
 // ========================================
 const buildOrderData = async (body) => {
   const { customerId, paymentMethod, items } = body;
@@ -58,7 +57,7 @@ const buildOrderData = async (body) => {
     return { status: 400, message: `Maksimal ${MAX_ITEMS} item per order` };
   }
 
-  // validasi bentuk tiap item
+  // Validasi bentuk tiap item
   for (let i = 0; i < items.length; i++) {
     const { servicePriceId, quantity } = items[i] || {};
     const no = i + 1;
@@ -93,7 +92,7 @@ const buildOrderData = async (body) => {
     return { status: 404, message: "Pelanggan tidak ditemukan" };
   }
 
-  // ambil semua harga yang dipakai dalam 1 query
+  // Ambil semua harga yang dipakai dalam 1 query
   const priceIds = [...new Set(items.map((i) => Number(i.servicePriceId)))];
 
   const prices = await ServicePrice.findAll({
@@ -118,7 +117,6 @@ const buildOrderData = async (body) => {
       };
     }
 
-    // pcs harus bilangan bulat, kg boleh desimal
     if (servicePrice.unit === "pcs" && !Number.isInteger(qty)) {
       return {
         status: 400,
@@ -224,7 +222,6 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // header + item disimpan bersamaan: gagal satu, batal semua
     const orderId = await db.transaction(async (transaction) => {
       const created = await Order.create(result.header, { transaction });
 
@@ -258,7 +255,6 @@ export const createOrder = async (req, res) => {
 
 // ========================================
 // UPDATE
-// item lama diganti seluruhnya dengan item yang dikirim
 // ========================================
 export const updateOrder = async (req, res) => {
   try {
@@ -305,6 +301,119 @@ export const updateOrder = async (req, res) => {
       success: true,
       message: "Order berhasil diupdate",
       data: updated,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ========================================
+// UPDATE STATUS (dipakai kasir)
+// ========================================
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!STATUSES.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Status harus salah satu dari: ${STATUSES.join(", ")}`,
+      });
+    }
+
+    const order = await Order.findByPk(id);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order tidak ditemukan",
+      });
+    }
+
+    await order.update({ status });
+
+    res.status(200).json({
+      success: true,
+      message: "Status order berhasil diupdate",
+      data: { id: order.id, status: order.status },
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ========================================
+// TRACK ORDER
+// ========================================
+const maskName = (name = "") =>
+  name
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => `${word[0]}***`)
+    .join(" ");
+
+export const trackOrder = async (req, res) => {
+  try {
+    const match = String(req.params.invoice || "")
+      .trim()
+      .match(/^(?:INV-?)?0*(\d+)$/i);
+
+    if (!match) {
+      return res.status(400).json({
+        success: false,
+        message: "Format invoice tidak valid. Contoh: INV-0001",
+      });
+    }
+
+    const order = await Order.findByPk(Number(match[1]), {
+      include: [
+        { model: Customer, as: "customer", attributes: ["name"] },
+        {
+          model: OrderItem,
+          as: "items",
+          attributes: ["id", "quantity", "unit"],
+          include: [
+            { model: Service, as: "service", attributes: ["name"] },
+            { model: ServicePrice, as: "servicePrice", attributes: ["itemType"] },
+          ],
+        },
+      ],
+      order: [[{ model: OrderItem, as: "items" }, "id", "ASC"]],
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Invoice tidak ditemukan",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Status order berhasil diambil",
+      data: {
+        invoice: `INV-${String(order.id).padStart(4, "0")}`,
+        status: order.status,
+        createdAt: order.createdAt,
+        customerName: maskName(order.customer?.name),
+        items: order.items.map((item) => ({
+          service: item.service?.name,
+          itemType: item.servicePrice?.itemType,
+          quantity: Number(item.quantity),
+          unit: item.unit,
+        })),
+      },
     });
   } catch (error) {
     console.error(error);
