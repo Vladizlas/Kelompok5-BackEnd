@@ -10,6 +10,7 @@ import "./models/ServicePrice.js";
 import "./models/Customer.js";
 import "./models/Order.js";
 import "./models/OrderItem.js";
+import "./models/Expense.js";
 
 const PORT = process.env.PORT || 3000;
 
