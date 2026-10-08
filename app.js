@@ -8,6 +8,7 @@ import serviceRoute from "./routes/serviceRoute.js";
 import userRoutes from "./routes/userRoutes.js";
 import customerRoutes from "./routes/customerRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import expenseRoutes from "./routes/expenseRoutes.js";
 
 const app = express();
 
@@ -64,6 +65,11 @@ app.use(
 app.use(
   "/api/orders",
   orderRoutes
+);
+
+app.use(
+  "/api/expenses",
+  expenseRoutes
 );
 
 
