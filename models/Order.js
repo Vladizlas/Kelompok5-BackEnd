@@ -24,6 +24,13 @@ const Order = db.define(
       field: "payment_method",
     },
 
+        // progres cucian, diubah kasir dari halaman Order
+    status: {
+      type: DataTypes.ENUM("diterima", "diproses", "selesai", "diambil"),
+      allowNull: false,
+      defaultValue: "diterima",
+    },
+
     // jumlah seluruh subtotal item
     totalPrice: {
       type: DataTypes.INTEGER,

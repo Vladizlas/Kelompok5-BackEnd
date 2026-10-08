@@ -10,6 +10,7 @@ import {
 } from "../models/index.js";
 
 const PAYMENT_METHODS = ["cash", "transfer"];
+const STATUSES = ["diterima", "diproses", "selesai", "diambil"];
 
 const MAX_ITEMS = 50;
 
@@ -305,6 +306,125 @@ export const updateOrder = async (req, res) => {
       success: true,
       message: "Order berhasil diupdate",
       data: updated,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ========================================
+// UPDATE STATUS (dipakai kasir)
+// ========================================
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!STATUSES.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Status harus salah satu dari: ${STATUSES.join(", ")}`,
+      });
+    }
+
+    const order = await Order.findByPk(id);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order tidak ditemukan",
+      });
+    }
+
+    await order.update({ status });
+
+    res.status(200).json({
+      success: true,
+      message: "Status order berhasil diupdate",
+      data: { id: order.id, status: order.status },
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ========================================
+// TRACK ORDER (publik, dipakai pelanggan di homepage)
+// Hanya mengembalikan data minimum: status, tanggal masuk,
+// nama yang disamarkan, dan rincian layanan.
+// TIDAK mengembalikan no telp, alamat, maupun total harga.
+// ========================================
+
+// "Budi Santoso" -> "B*** S***"
+const maskName = (name = "") =>
+  name
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => `${word[0]}***`)
+    .join(" ");
+
+export const trackOrder = async (req, res) => {
+  try {
+    // terima "INV-0001", "inv-1", atau "1"
+    const match = String(req.params.invoice || "")
+      .trim()
+      .match(/^(?:INV-?)?0*(\d+)$/i);
+
+    if (!match) {
+      return res.status(400).json({
+        success: false,
+        message: "Format invoice tidak valid. Contoh: INV-0001",
+      });
+    }
+
+    const order = await Order.findByPk(Number(match[1]), {
+      include: [
+        { model: Customer, as: "customer", attributes: ["name"] },
+        {
+          model: OrderItem,
+          as: "items",
+          attributes: ["id", "quantity", "unit"],
+          include: [
+            { model: Service, as: "service", attributes: ["name"] },
+            { model: ServicePrice, as: "servicePrice", attributes: ["itemType"] },
+          ],
+        },
+      ],
+      order: [[{ model: OrderItem, as: "items" }, "id", "ASC"]],
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Invoice tidak ditemukan",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Status order berhasil diambil",
+      data: {
+        invoice: `INV-${String(order.id).padStart(4, "0")}`,
+        status: order.status,
+        createdAt: order.createdAt,
+        customerName: maskName(order.customer?.name),
+        items: order.items.map((item) => ({
+          service: item.service?.name,
+          itemType: item.servicePrice?.itemType,
+          quantity: Number(item.quantity),
+          unit: item.unit,
+        })),
+      },
     });
   } catch (error) {
     console.error(error);
