@@ -34,8 +34,6 @@ const orderSort = [
 
 // ========================================
 // VALIDASI + HITUNG ORDER
-// Kategori & layanan tiap item DIAMBIL dari servicePrice di server,
-// subtotal & total DIHITUNG di server (bukan percaya kiriman client).
 // ========================================
 const buildOrderData = async (body) => {
   const { customerId, paymentMethod, items } = body;
@@ -59,7 +57,7 @@ const buildOrderData = async (body) => {
     return { status: 400, message: `Maksimal ${MAX_ITEMS} item per order` };
   }
 
-  // validasi bentuk tiap item
+  // Validasi bentuk tiap item
   for (let i = 0; i < items.length; i++) {
     const { servicePriceId, quantity } = items[i] || {};
     const no = i + 1;
@@ -94,7 +92,7 @@ const buildOrderData = async (body) => {
     return { status: 404, message: "Pelanggan tidak ditemukan" };
   }
 
-  // ambil semua harga yang dipakai dalam 1 query
+  // Ambil semua harga yang dipakai dalam 1 query
   const priceIds = [...new Set(items.map((i) => Number(i.servicePriceId)))];
 
   const prices = await ServicePrice.findAll({
@@ -119,7 +117,6 @@ const buildOrderData = async (body) => {
       };
     }
 
-    // pcs harus bilangan bulat, kg boleh desimal
     if (servicePrice.unit === "pcs" && !Number.isInteger(qty)) {
       return {
         status: 400,
@@ -225,7 +222,6 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // header + item disimpan bersamaan: gagal satu, batal semua
     const orderId = await db.transaction(async (transaction) => {
       const created = await Order.create(result.header, { transaction });
 
@@ -259,7 +255,6 @@ export const createOrder = async (req, res) => {
 
 // ========================================
 // UPDATE
-// item lama diganti seluruhnya dengan item yang dikirim
 // ========================================
 export const updateOrder = async (req, res) => {
   try {
@@ -359,13 +354,8 @@ export const updateOrderStatus = async (req, res) => {
 };
 
 // ========================================
-// TRACK ORDER (publik, dipakai pelanggan di homepage)
-// Hanya mengembalikan data minimum: status, tanggal masuk,
-// nama yang disamarkan, dan rincian layanan.
-// TIDAK mengembalikan no telp, alamat, maupun total harga.
+// TRACK ORDER
 // ========================================
-
-// "Budi Santoso" -> "B*** S***"
 const maskName = (name = "") =>
   name
     .split(" ")
@@ -375,7 +365,6 @@ const maskName = (name = "") =>
 
 export const trackOrder = async (req, res) => {
   try {
-    // terima "INV-0001", "inv-1", atau "1"
     const match = String(req.params.invoice || "")
       .trim()
       .match(/^(?:INV-?)?0*(\d+)$/i);
