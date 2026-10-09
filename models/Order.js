@@ -24,7 +24,7 @@ const Order = db.define(
       field: "payment_method",
     },
 
-    // progres cucian, diubah kasir dari halaman Order
+    // progres cucian, diubah admin dari halaman Order
     status: {
       type: DataTypes.ENUM("diterima", "diproses", "selesai", "diambil"),
       allowNull: false,
