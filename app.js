@@ -9,6 +9,7 @@ import userRoutes from "./routes/userRoutes.js";
 import customerRoutes from "./routes/customerRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
+import onlineOrderRoutes from "./routes/onlineOrderRoutes.js";
 
 const app = express();
 
@@ -70,6 +71,11 @@ app.use(
 app.use(
   "/api/expenses",
   expenseRoutes
+);
+
+app.use(
+  "/api/pesan-online",
+   onlineOrderRoutes
 );
 
 

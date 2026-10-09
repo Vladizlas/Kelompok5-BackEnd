@@ -220,3 +220,17 @@ Content-Type: application/json
 
 ### DELETE ORDER
 DELETE http://localhost:3000/api/orders/1
+
+### Buat pesanan online (percobaan)
+POST http://localhost:3000/api/pesan-online
+Content-Type: application/json
+
+{
+  "nama": "Budi Percobaan",
+  "pengambilan": "jemput",
+  "alamat": "Jl. Melati No. 5",
+  "catatan": "Tes dari request.rest",
+  "items": [
+    { "servicePriceId": 5, "quantity": 2 }
+  ]
+}

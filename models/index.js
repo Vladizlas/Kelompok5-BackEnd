@@ -4,6 +4,8 @@ import ServicePrice from "./ServicePrice.js";
 import Customer from "./Customer.js";
 import Order from "./Order.js";
 import OrderItem from "./OrderItem.js";
+import OnlineOrder from "./OnlineOrder.js";
+import OnlineOrderItem from "./OnlineOrderItem.js";
 
 // ========================================
 // CATEGORY SERVICE -> SERVICE
@@ -110,6 +112,64 @@ OrderItem.belongsTo(ServicePrice, {
   onDelete: "RESTRICT",
 });
 
+// ========================================
+// ONLINE ORDER -> ONLINE ORDER ITEMS
+// hapus pesanan online = hapus semua itemnya
+// ========================================
+
+OnlineOrder.hasMany(OnlineOrderItem, {
+  foreignKey: "onlineOrderId",
+  as: "items",
+  onDelete: "CASCADE",
+});
+
+OnlineOrderItem.belongsTo(OnlineOrder, {
+  foreignKey: "onlineOrderId",
+  as: "onlineOrder",
+  onDelete: "CASCADE",
+});
+
+// ========================================
+// ONLINE ORDER ITEM -> data master layanan
+// alias dibedakan (onlineOrderItems) agar tidak bentrok dengan orderItems
+// ========================================
+
+CategoryService.hasMany(OnlineOrderItem, {
+  foreignKey: "categoryId",
+  as: "onlineOrderItems",
+  onDelete: "RESTRICT",
+});
+
+OnlineOrderItem.belongsTo(CategoryService, {
+  foreignKey: "categoryId",
+  as: "category",
+  onDelete: "RESTRICT",
+});
+
+Service.hasMany(OnlineOrderItem, {
+  foreignKey: "serviceId",
+  as: "onlineOrderItems",
+  onDelete: "RESTRICT",
+});
+
+OnlineOrderItem.belongsTo(Service, {
+  foreignKey: "serviceId",
+  as: "service",
+  onDelete: "RESTRICT",
+});
+
+ServicePrice.hasMany(OnlineOrderItem, {
+  foreignKey: "servicePriceId",
+  as: "onlineOrderItems",
+  onDelete: "RESTRICT",
+});
+
+OnlineOrderItem.belongsTo(ServicePrice, {
+  foreignKey: "servicePriceId",
+  as: "servicePrice",
+  onDelete: "RESTRICT",
+});
+
 export {
   CategoryService,
   Service,
@@ -117,4 +177,6 @@ export {
   Customer,
   Order,
   OrderItem,
+  OnlineOrder,
+  OnlineOrderItem,
 };

@@ -11,6 +11,8 @@ import "./models/Customer.js";
 import "./models/Order.js";
 import "./models/OrderItem.js";
 import "./models/Expense.js";
+import "./models/OnlineOrder.js";
+import "./models/OnlineOrderItem.js";
 
 const PORT = process.env.PORT || 3000;
 
