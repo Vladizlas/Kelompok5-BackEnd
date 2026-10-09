@@ -8,6 +8,7 @@ import {
 } from "../models/index.js";
 
 const PICKUP_TYPES = ["antar", "jemput"];
+const RETURN_TYPES = ["ambil", "antar"];
 const STATUSES = ["menunggu", "dijemput", "diproses", "selesai", "dibatalkan"];
 const MAX_ITEMS = 50;
 
@@ -34,6 +35,8 @@ const serialize = (order) => ({
   nama: order.nama,
   pengambilan: order.pengambilan,
   alamat: order.alamat,
+  pengembalian: order.pengembalian,
+  alamatAntar: order.alamatAntar,
   catatan: order.catatan,
   total: order.totalPrice,
   status: capitalize(order.status),
@@ -77,7 +80,15 @@ export const getOnlineOrders = async (req, res) => {
 // ========================================
 export const createOnlineOrder = async (req, res) => {
   try {
-    const { nama, pengambilan, alamat, catatan, items } = req.body;
+        const {
+      nama,
+      pengambilan,
+      alamat,
+      pengembalian = "ambil",
+      alamatAntar,
+      catatan,
+      items,
+    } = req.body;
 
     if (!String(nama || "").trim()) {
       return res
@@ -102,6 +113,26 @@ export const createOnlineOrder = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Alamat penjemputan wajib diisi",
+      });
+    }
+        if (!RETURN_TYPES.includes(pengembalian)) {
+      return res.status(400).json({
+        success: false,
+        message: "Pengembalian harus ambil atau antar",
+      });
+    }
+
+    if (pengembalian === "antar" && !String(alamatAntar || "").trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Alamat pengantaran wajib diisi",
+      });
+    }
+
+    if (String(alamatAntar || "").length > 255) {
+      return res.status(400).json({
+        success: false,
+        message: "Alamat pengantaran maksimal 255 karakter",
       });
     }
 
@@ -204,6 +235,9 @@ export const createOnlineOrder = async (req, res) => {
           nama: String(nama).trim(),
           pengambilan,
           alamat: pengambilan === "jemput" ? String(alamat).trim() : null,
+          pengembalian,
+          alamatAntar:
+            pengembalian === "antar" ? String(alamatAntar).trim() : null,
           catatan: String(catatan || "").trim() || null,
           totalPrice,
         },

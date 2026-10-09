@@ -29,6 +29,20 @@ const OnlineOrder = db.define(
       allowNull: true,
     },
 
+        // cara cucian selesai sampai ke pelanggan
+    pengembalian: {
+      type: DataTypes.ENUM("ambil", "antar"),
+      allowNull: false,
+      defaultValue: "ambil",
+    },
+
+    // hanya terisi jika pengembalian = antar
+    alamatAntar: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      field: "alamat_antar",
+    },
+
     catatan: {
       type: DataTypes.STRING(255),
       allowNull: true,

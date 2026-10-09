@@ -234,3 +234,17 @@ Content-Type: application/json
     { "servicePriceId": 5, "quantity": 2 }
   ]
 }
+
+### Pesanan online dengan pengantaran
+POST http://localhost:3000/api/pesan-online
+Content-Type: application/json
+
+{
+  "nama": "Siti Tes Antar",
+  "pengambilan": "antar",
+  "pengembalian": "antar",
+  "alamatAntar": "Jl. Kenanga No. 12, Padang",
+  "items": [
+    { "servicePriceId": 7, "quantity": 2 }
+  ]
+}
