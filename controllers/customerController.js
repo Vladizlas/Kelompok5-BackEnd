@@ -102,6 +102,17 @@ export const createCustomer = async (req, res) => {
       });
     }
 
+    const existingCustomer = await Customer.findOne({
+  where: { phone: phone.trim() },
+});
+
+if (existingCustomer) {
+  return res.status(400).json({
+    success: false,
+    message: "Nomor telepon sudah digunakan oleh customer lain",
+  });
+}
+
     const customer = await Customer.create({
       name: name.trim(),
       phone: phone.trim(),
@@ -148,6 +159,17 @@ export const updateCustomer = async (req, res) => {
         message: validationError,
       });
     }
+
+    const existingCustomer = await Customer.findOne({
+  where: { phone: phone.trim() },
+});
+
+if (existingCustomer && existingCustomer.id !== customer.id) {
+  return res.status(400).json({
+    success: false,
+    message: "Nomor telepon sudah digunakan oleh customer lain",
+  });
+}
 
     await customer.update({
       name: name.trim(),

@@ -20,9 +20,6 @@ try {
   await db.authenticate();
   console.log("Database connected successfully!");
 
-  await db.sync();
-  console.log("Database berhasil disinkronkan!");
-
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
