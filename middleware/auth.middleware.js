@@ -1,22 +1,22 @@
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "belajar-react-jwt-rahasia";
-
-// Middleware 1: Verifikasi Token JWT
 export const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({
-      message: "Token tidak tersedia",
+      message: "Token tidak ditemukan",
     });
   }
 
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded; // Menyimpan payload user (id, email, role, dll) ke request
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Sesuaikan dengan struktur payload JWT saat login.
+    req.user = decoded;
+
     next();
   } catch (error) {
     return res.status(401).json({
@@ -25,17 +25,18 @@ export const verifyToken = (req, res, next) => {
   }
 };
 
-// Alias jika masih ada file lain yang memakai nama 'authMiddleware'
 export const authMiddleware = verifyToken;
 
-// Middleware 2: Otorisasi Berdasarkan Role (Role-Based Access Control)
-export const authorizeRoles = (...allowedRoles) => {
+export const authorizeRoles = (...roles) => {
   return (req, res, next) => {
-    if (!req.user || !allowedRoles.includes(req.user.role?.toLowerCase())) {
+    const role = (req.user?.role || "").toLowerCase();
+
+    if (!roles.includes(role)) {
       return res.status(403).json({
-        message: `Akses ditolak. Rute ini hanya untuk role: ${allowedRoles.join(", ")}`,
+        message: "Kamu tidak memiliki akses ke fitur ini",
       });
     }
+
     next();
   };
 };
