@@ -1,6 +1,5 @@
 import express from "express";
 
-// Import Named Export dari controller
 import {
   getServices,
   getService,
@@ -9,27 +8,20 @@ import {
   deleteService,
 } from "../controllers/serviceController.js";
 
-import { verifyToken, authorizeRoles } from "../middleware/auth.middleware.js";
+import {
+  verifyToken,
+  authorizeRoles,
+} from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-// GET: Akses Kasir, Admin, Owner
-router.get(
-  "/",
-  verifyToken,
-  authorizeRoles("kasir", "admin", "owner"),
-  getServices
-);
+// GET ALL SERVICES: Public
+router.get("/", getServices);
 
-// GET BY ID: Akses Kasir, Admin, Owner
-router.get(
-  "/:id",
-  verifyToken,
-  authorizeRoles("kasir", "admin", "owner"),
-  getService
-);
+// GET SERVICE BY ID: Public
+router.get("/:id", getService);
 
-// POST: Akses Admin & Owner
+// CREATE SERVICE: Admin & Owner
 router.post(
   "/",
   verifyToken,
@@ -37,7 +29,7 @@ router.post(
   createService
 );
 
-// PUT: Akses Admin & Owner
+// UPDATE SERVICE: Admin & Owner
 router.put(
   "/:id",
   verifyToken,
@@ -45,7 +37,7 @@ router.put(
   updateService
 );
 
-// DELETE: Akses Admin & Owner
+// DELETE SERVICE: Admin & Owner
 router.delete(
   "/:id",
   verifyToken,
