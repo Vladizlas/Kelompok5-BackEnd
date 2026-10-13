@@ -13,6 +13,10 @@ import { verifyToken, authorizeRoles } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
+// GET PUBLIC (Tanpa verifyToken agar Home.jsx bisa akses)
+router.get("/", getServices);
+router.get("/:id", getService);
+
 // GET: Akses Kasir, Admin, Owner
 router.get(
   "/",
